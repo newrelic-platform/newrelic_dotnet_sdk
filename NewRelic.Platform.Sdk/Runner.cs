@@ -175,7 +175,16 @@ namespace NewRelic.Platform.Sdk
 
         private int GetPollInterval()
         {
-            int pollInterval = 60;
+            int pollInterval;
+            if (this.newRelicConfig.PollInterval.HasValue)
+            {
+                pollInterval = this.newRelicConfig.PollInterval.Value;
+            }
+            else
+            {
+                pollInterval = 60;
+            }
+
             return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
         }
 

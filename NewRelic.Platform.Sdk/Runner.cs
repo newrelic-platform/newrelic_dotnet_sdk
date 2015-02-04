@@ -120,7 +120,8 @@ namespace NewRelic.Platform.Sdk
                         return;
                     }
 
-                    Thread.Sleep(pollInterval);
+                    int millisecondsToNextInterval = GetPollInterval() - ((DateTime.Now.Second * 1000) % GetPollInterval()) - DateTime.Now.Millisecond;
+                    Thread.Sleep(millisecondsToNextInterval);
                 }
                 catch (Exception e)
                 {

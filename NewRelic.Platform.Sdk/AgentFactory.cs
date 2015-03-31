@@ -13,7 +13,7 @@ namespace NewRelic.Platform.Sdk
     /// </summary>
     public abstract class AgentFactory
     {
-        private const string ConfigurationFilePath = @"config\plugin.json";
+        private static readonly string ConfigurationFilePath = Path.Combine("config", "plugin.json");
 
         private static Logger s_log = Logger.GetLogger("AgentFactory");
 

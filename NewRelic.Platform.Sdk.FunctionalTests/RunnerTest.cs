@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
 
 namespace NewRelic.Platform.Sdk.FunctionalTests
 {
@@ -52,6 +53,17 @@ namespace NewRelic.Platform.Sdk.FunctionalTests
             Runner runner = new Runner();
             runner.Add(new TestAgent("FunctionalTest", -10));
             runner.SetupAndRunWithLimit(1); // Should not raise an exception
+        }
+        [TestMethod]
+        public void TestPollCycleRunsEvery60Seconds()
+        {
+            Runner runner = new Runner();
+            runner.Add(new TestAgent("", 4));
+            runner.SetupAndRun();
+            Thread.Sleep(10* 60 * 1000 + 50); //sleep for a little over 10 minutes
+            Assert.AreEqual(runner.PollCycleCounter, 10); //check if 10 transmissions have occured
+            
+
         }
     }
 }

@@ -93,11 +93,13 @@ namespace NewRelic.Platform.Sdk
                 agent.PrepareToRun(context);
             }
 
-            var pollInterval = GetPollInterval(); // Fetch poll interval here so we can report any issues early
+            var pollInterval = this.newRelicConfig.PollInterval.GetValueOrDefault() * 1000; //  poll interval in milliseconds
 
             while (true)
             {
                 // Invoke each Agent's PollCycle method, logging any exceptions that occur
+
+                var startTime = DateTime.Now.Ticks; //start time stamp
                 try
                 {
                     foreach (var agent in _agents)
@@ -120,7 +122,18 @@ namespace NewRelic.Platform.Sdk
                         return;
                     }
 
-                    Thread.Sleep(pollInterval);
+                    var endTime = DateTime.Now.Ticks; //end time stamp
+                    var pollDuration = (int) ((endTime - startTime)/TimeSpan.TicksPerMillisecond);
+                    s_log.Info("Processing Time: {0}ms", pollDuration);
+                    var sleepDuration = pollInterval - pollDuration;
+                    if (sleepDuration <= 0)
+                    {
+                        s_log.Warn("Processing time longer than Poll Interval of {0}ms", pollInterval);
+                    }
+                    else
+                    {
+                        Thread.Sleep(sleepDuration);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -171,12 +184,6 @@ namespace NewRelic.Platform.Sdk
             {
                 _agents = _agents.Union(factory.CreateAgents()).ToList();
             }
-        }
-
-        private int GetPollInterval()
-        {
-            int pollInterval = 60;
-            return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
         }
 
         #region Test Helpers

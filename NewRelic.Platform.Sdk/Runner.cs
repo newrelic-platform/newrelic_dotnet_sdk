@@ -190,7 +190,7 @@ namespace NewRelic.Platform.Sdk
 
         private int GetTimeSincePreviousMetric(DateTime currentMetricSendTime, DateTime previousMetricTime)
         {
-            return (int)(previousMetricTime - currentMetricSendTime).TotalMilliseconds;
+            return (int)(currentMetricSendTime - previousMetricTime).TotalMilliseconds;
         }
 
         #region Test Helpers

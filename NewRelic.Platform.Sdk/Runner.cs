@@ -107,12 +107,12 @@ namespace NewRelic.Platform.Sdk
                         agent.PollCycle();
                     }
                 }
-                catch(Exception e) 
+                catch (Exception e)
                 {
                     s_log.Error("Error error occurred during PollCycle", e);
                 }
 
-                try 
+                try
                 {
                     context.SendMetricsToService();
 
@@ -123,7 +123,7 @@ namespace NewRelic.Platform.Sdk
                     }
 
                     var endTime = DateTime.Now.Ticks; //end time stamp
-                    var pollDuration = (int) ((endTime - startTime)/TimeSpan.TicksPerMillisecond);
+                    var pollDuration = (int)((endTime - startTime) / TimeSpan.TicksPerMillisecond);
                     s_log.Info("Processing Time: {0}ms", pollDuration);
                     var sleepDuration = pollInterval - pollDuration;
                     if (sleepDuration <= 0)
@@ -137,8 +137,11 @@ namespace NewRelic.Platform.Sdk
                 }
                 catch (Exception e)
                 {
+
                     s_log.Fatal("Fatal error occurred. Shutting down the application", e);
                     throw e;
+
+
                 }
             }
         }
@@ -157,7 +160,7 @@ namespace NewRelic.Platform.Sdk
                 {
                     throw new InvalidOperationException("When setting up a proxy, port is required.");
                 }
-                
+
                 ICredentials credentials;
                 if (username.IsValidString())
                 {
@@ -196,7 +199,7 @@ namespace NewRelic.Platform.Sdk
 
         internal List<Agent> Agents { get { return _agents; } }
 
-        internal void SetupAndRunWithLimit(int limit) 
+        internal void SetupAndRunWithLimit(int limit)
         {
             _limitRun = true;
             _limit = limit;

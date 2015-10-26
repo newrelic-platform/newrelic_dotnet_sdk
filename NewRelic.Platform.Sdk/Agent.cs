@@ -49,6 +49,21 @@ namespace NewRelic.Platform.Sdk
         }
 
         /// <summary>
+        /// Registers a metric for this poll cycle that will be sent when all Agents complete their PollCycle.
+        /// </summary>
+        /// <param name="metricName">A string name representing the name of the metric (e.g. 'Category/Name')</param>
+        /// <param name="units">The units of the metric you are sending to the service (e.g. 'byte/second')</param>
+        /// <param name="value">The non-negative float value representing this value</param>
+        /// <param name="count">The int value representing how many poll cycle this metric has been aggregated for</param>
+        /// <param name="min">The non-negative float value representing this min value for this poll cycle</param>
+        /// <param name="max">The non-negative float value representing this max value for this poll cycle</param>
+        /// <param name="sumOfSquares">The non-negative float value representing the sum of square values for this poll cycle</param>
+        public void ReportMetric(string metricName, string units, float value, int count, float min, float max, float sumOfSquares)
+        {
+            _context.ReportMetric(Guid, GetAgentName(), metricName, units, value, count, min, max, sumOfSquares);
+        }
+
+        /// <summary>
         /// Each descended class has this method invoked once per poll interval.  Consumers should invoke ReportMetric() 
         /// within this method in order to have metrics sent to the service.
         /// </summary>

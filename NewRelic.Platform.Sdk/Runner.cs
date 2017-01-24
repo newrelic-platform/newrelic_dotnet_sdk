@@ -175,8 +175,9 @@ namespace NewRelic.Platform.Sdk
 
         private int GetPollInterval()
         {
-            int pollInterval = 60;
-            return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
+            return newRelicConfig.PollInterval.HasValue
+                ? newRelicConfig.PollInterval.Value
+                : 60000; // used by the Sleep() method which expects milliseconds
         }
 
         #region Test Helpers

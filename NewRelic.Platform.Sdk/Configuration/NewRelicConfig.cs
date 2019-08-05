@@ -9,7 +9,6 @@ namespace NewRelic.Platform.Sdk.Configuration
     public class NewRelicConfig : INewRelicConfig
     {
         private static NewRelicConfig ConfigInstance;
-        private const string ConfigPath = @"config\newrelic.json";
         private const string DefaultEndpoint = "https://platform-api.newrelic.com/platform/v1/metrics";
         private const string DefaultLogFileName = "newrelic_plugin.log";
         private const string DefaultLogFilePath = @"logs";
@@ -68,7 +67,7 @@ namespace NewRelic.Platform.Sdk.Configuration
                 if (ConfigInstance == null)
                 {
                     string assemblyPath = Assembly.GetExecutingAssembly().GetLocalPath();
-                    string configPath = Path.Combine(assemblyPath, ConfigPath);
+                    string configPath = Path.Combine(assemblyPath, Path.Combine("config", "newrelic.json"));
 
                     if (!File.Exists(configPath))
                     {

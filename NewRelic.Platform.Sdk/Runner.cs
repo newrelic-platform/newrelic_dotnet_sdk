@@ -6,7 +6,7 @@ using System.Threading;
 using NewRelic.Platform.Sdk.Binding;
 using NewRelic.Platform.Sdk.Configuration;
 using NewRelic.Platform.Sdk.Utils;
-
+using System.Timers;
 namespace NewRelic.Platform.Sdk
 {
     public class Runner
@@ -17,6 +17,20 @@ namespace NewRelic.Platform.Sdk
 
         private static Logger s_log = Logger.GetLogger("Runner");
 
+        private System.Timers.Timer _pollCycleTimer;
+
+        int _pollCycleCounter = 0;
+
+        // Initialize agents with the same Context so they aggregate to a single a request
+        Context _context = new Context();
+
+        public int PollCycleCounter
+        {
+            get
+            {
+                return _pollCycleCounter;
+            }
+        }
         public Runner(INewRelicConfig config = null)
         {
             this.newRelicConfig = config ?? NewRelicConfig.Instance;
@@ -33,6 +47,8 @@ namespace NewRelic.Platform.Sdk
             // used for testing purposes
             _limit = this.newRelicConfig.NewRelicMaxIterations.GetValueOrDefault();
             _limitRun = this.newRelicConfig.NewRelicMaxIterations.HasValue;
+
+            initializePollCycleTimer();
         }
 
         /// <summary>
@@ -74,60 +90,8 @@ namespace NewRelic.Platform.Sdk
         /// </summary>
         public void SetupAndRun()
         {
-            if (_factories.Count == 0 && _agents.Count == 0)
-            {
-                throw new InvalidOperationException("You must first call 'Add()' at least once with a valid factory or agent");
-            }
-
-            // Initialize agents if they added an AgentFactory, otherwise they have explicitly added initialized agents already
-            if (_factories.Count > 0)
-            {
-                InitializeFactoryAgents();
-            }
-
-            // Initialize agents with the same Context so they aggregate to a single a request
-            var context = new Context();
-
-            foreach (var agent in _agents)
-            {
-                agent.PrepareToRun(context);
-            }
-
-            var pollInterval = GetPollInterval(); // Fetch poll interval here so we can report any issues early
-
-            while (true)
-            {
-                // Invoke each Agent's PollCycle method, logging any exceptions that occur
-                try
-                {
-                    foreach (var agent in _agents)
-                    {
-                        agent.PollCycle();
-                    }
-                }
-                catch(Exception e) 
-                {
-                    s_log.Error("Error error occurred during PollCycle", e);
-                }
-
-                try 
-                {
-                    context.SendMetricsToService();
-
-                    // Enables limited runs for tests that want to invoke the service
-                    if (_limitRun && --_limit == 0)
-                    {
-                        return;
-                    }
-
-                    Thread.Sleep(pollInterval);
-                }
-                catch (Exception e)
-                {
-                    s_log.Fatal("Fatal error occurred. Shutting down the application", e);
-                    throw e;
-                }
-            }
+            setupPollCycle();
+            _pollCycleTimer.Enabled = true;
         }
 
         protected virtual void SetupProxy(string hostname, int? port, string username, string password)
@@ -144,7 +108,7 @@ namespace NewRelic.Platform.Sdk
                 {
                     throw new InvalidOperationException("When setting up a proxy, port is required.");
                 }
-                
+
                 ICredentials credentials;
                 if (username.IsValidString())
                 {
@@ -173,11 +137,81 @@ namespace NewRelic.Platform.Sdk
             }
         }
 
+        #region PollCycleTimer
+
         private int GetPollInterval()
         {
             int pollInterval = 60;
             return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
         }
+
+        private void initializePollCycleTimer()
+        {
+            _pollCycleTimer = new System.Timers.Timer(GetPollInterval());
+            _pollCycleTimer.Elapsed += _pollCycleTimer_Elapsed;
+        }
+
+        void _pollCycleTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            executePollCycle();
+            _pollCycleCounter++;
+        }
+
+        private void setupPollCycle()
+        {
+            if (_factories.Count == 0 && _agents.Count == 0)
+            {
+                throw new InvalidOperationException("You must first call 'Add()' at least once with a valid factory or agent");
+            }
+
+            // Initialize agents if they added an AgentFactory, otherwise they have explicitly added initialized agents already
+            if (_factories.Count > 0)
+            {
+                InitializeFactoryAgents();
+            }
+
+
+            foreach (var agent in _agents)
+            {
+                agent.PrepareToRun(_context);
+            }
+        }
+
+        private void executePollCycle()
+        {
+            // Invoke each Agent's PollCycle method, logging any exceptions that occur
+            try
+            {
+                foreach (var agent in _agents)
+                {
+                    agent.PollCycle();
+                }
+            }
+            catch (Exception ex)
+            {
+                s_log.Error("Error error occurred during PollCycle", ex);
+            }
+
+            try
+            {
+                _context.SendMetricsToService();
+
+                // Enables limited runs for tests that want to invoke the service
+                if (_limitRun && --_limit == 0)
+                {
+                    return;
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                s_log.Fatal("Fatal error occurred. Shutting down the application", ex);
+                throw ex;
+            }
+        }
+
+        #endregion PollCycleTimer
 
         #region Test Helpers
 
@@ -189,11 +223,12 @@ namespace NewRelic.Platform.Sdk
 
         internal List<Agent> Agents { get { return _agents; } }
 
-        internal void SetupAndRunWithLimit(int limit) 
+        internal void SetupAndRunWithLimit(int limit)
         {
             _limitRun = true;
             _limit = limit;
-            SetupAndRun();
+            setupPollCycle();
+            executePollCycle();
         }
 
         #endregion

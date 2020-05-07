@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>NewRelic.Platform.Sdk</id>
+    <version>1.0.0.0</version>
+    <title>New Relic Platform .NET SDK</title>
+    <authors>Adam Larson, Tom Macie, Jason Stenhouse</authors>
+    <owners>Adam Larson, Tom Macie, Jason Stenhouse</owners>
+    <licenseUrl>https://raw.github.com/newrelic-platform/newrelic_dotnet_sdk/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/newrelic-platform/newrelic_dotnet_sdk</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>New Relic Platform .NET SDK</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <copyright>Copyright 2013-2014</copyright>
+    <tags>NewRelic</tags>
+  </metadata>
+</package>

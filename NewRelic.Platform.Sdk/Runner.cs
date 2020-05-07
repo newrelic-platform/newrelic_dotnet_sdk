@@ -95,6 +95,10 @@ namespace NewRelic.Platform.Sdk
 
             var pollInterval = GetPollInterval(); // Fetch poll interval here so we can report any issues early
 
+            // Currently the graphs in New Relic will appear to drop to zero if a metric is sent less than once a minute
+            // and not sent close to the beginning of the minute, so bias towards starting at the beginning of the minute
+            DateTime previousMetricTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0);
+
             while (true)
             {
                 // Invoke each Agent's PollCycle method, logging any exceptions that occur
@@ -120,7 +124,12 @@ namespace NewRelic.Platform.Sdk
                         return;
                     }
 
-                    Thread.Sleep(pollInterval);
+                    DateTime currentMetricSendTime = DateTime.Now;
+                    int millisecondsToNextInterval = pollInterval - (GetTimeSincePreviousMetric(currentMetricSendTime, previousMetricTime) % pollInterval);
+
+                    Thread.Sleep(millisecondsToNextInterval);
+
+                    previousMetricTime = currentMetricSendTime;
                 }
                 catch (Exception e)
                 {
@@ -177,6 +186,11 @@ namespace NewRelic.Platform.Sdk
         {
             int pollInterval = 60;
             return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
+        }
+
+        private int GetTimeSincePreviousMetric(DateTime currentMetricSendTime, DateTime previousMetricTime)
+        {
+            return (int)(currentMetricSendTime - previousMetricTime).TotalMilliseconds;
         }
 
         #region Test Helpers

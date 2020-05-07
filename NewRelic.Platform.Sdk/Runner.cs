@@ -93,11 +93,13 @@ namespace NewRelic.Platform.Sdk
                 agent.PrepareToRun(context);
             }
 
-            var pollInterval = GetPollInterval(); // Fetch poll interval here so we can report any issues early
+            var pollInterval = this.newRelicConfig.PollInterval.GetValueOrDefault() * 1000; //  poll interval in milliseconds
 
             while (true)
             {
                 // Invoke each Agent's PollCycle method, logging any exceptions that occur
+
+                var startTime = DateTime.Now.Ticks; //start time stamp
                 try
                 {
                     foreach (var agent in _agents)
@@ -105,12 +107,12 @@ namespace NewRelic.Platform.Sdk
                         agent.PollCycle();
                     }
                 }
-                catch(Exception e) 
+                catch (Exception e)
                 {
                     s_log.Error("Error error occurred during PollCycle", e);
                 }
 
-                try 
+                try
                 {
                     context.SendMetricsToService();
 
@@ -120,12 +122,26 @@ namespace NewRelic.Platform.Sdk
                         return;
                     }
 
-                    Thread.Sleep(pollInterval);
+                    var endTime = DateTime.Now.Ticks; //end time stamp
+                    var pollDuration = (int)((endTime - startTime) / TimeSpan.TicksPerMillisecond);
+                    s_log.Info("Processing Time: {0}ms", pollDuration);
+                    var sleepDuration = pollInterval - pollDuration;
+                    if (sleepDuration <= 0)
+                    {
+                        s_log.Warn("Processing time longer than Poll Interval of {0}ms", pollInterval);
+                    }
+                    else
+                    {
+                        Thread.Sleep(sleepDuration);
+                    }
                 }
                 catch (Exception e)
                 {
+
                     s_log.Fatal("Fatal error occurred. Shutting down the application", e);
                     throw e;
+
+
                 }
             }
         }
@@ -144,7 +160,7 @@ namespace NewRelic.Platform.Sdk
                 {
                     throw new InvalidOperationException("When setting up a proxy, port is required.");
                 }
-                
+
                 ICredentials credentials;
                 if (username.IsValidString())
                 {
@@ -173,12 +189,6 @@ namespace NewRelic.Platform.Sdk
             }
         }
 
-        private int GetPollInterval()
-        {
-            int pollInterval = 60;
-            return pollInterval *= 1000; // Convert to milliseconds since that's what system calls expect;
-        }
-
         #region Test Helpers
 
         /// <summary>
@@ -189,7 +199,7 @@ namespace NewRelic.Platform.Sdk
 
         internal List<Agent> Agents { get { return _agents; } }
 
-        internal void SetupAndRunWithLimit(int limit) 
+        internal void SetupAndRunWithLimit(int limit)
         {
             _limitRun = true;
             _limit = limit;

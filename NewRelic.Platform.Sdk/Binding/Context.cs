@@ -189,15 +189,23 @@ namespace NewRelic.Platform.Sdk.Binding
             request.ContentType = "application/json";
             request.Accept = "application/json";
             request.Headers["X-License-Key"] = this.LicenseKey;
-
-            using (var writer = new StreamWriter(request.GetRequestStream()))
+            try
             {
-                var str = JsonHelper.Serialize(_requestData.Serialize());
-                s_log.Debug("Sending JSON: {0}", str);
-                writer.Write(str);
+                using (var writer = new StreamWriter(request.GetRequestStream()))
+                {
+                    var str = JsonHelper.Serialize(_requestData.Serialize());
+                    s_log.Debug("Sending JSON: {0}", str);
+                    writer.Write(str);
+                }
+                HandleServiceResponse(request);
+            }
+            catch (WebException we)
+            {
+                // Log web exception
+                s_log.Error("No response from server.");
             }
 
-            HandleServiceResponse(request);
+ 
         }
 
         private bool ValidateRequestData()

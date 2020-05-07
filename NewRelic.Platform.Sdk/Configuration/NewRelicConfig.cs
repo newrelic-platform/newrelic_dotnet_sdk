@@ -14,7 +14,7 @@ namespace NewRelic.Platform.Sdk.Configuration
         private const string DefaultLogFileName = "newrelic_plugin.log";
         private const string DefaultLogFilePath = @"logs";
         private const int DefaultLogLimitInKiloBytes = 25600;
-
+        private const int DefaultPollInterval = 60;
         private NewRelicConfig()
         {
             // set default values
@@ -23,6 +23,7 @@ namespace NewRelic.Platform.Sdk.Configuration
             this.LogFileName = DefaultLogFileName;
             this.LogFilePath = Path.Combine(Assembly.GetExecutingAssembly().GetLocalPath(), DefaultLogFilePath);
             this.LogLimitInKiloBytes = DefaultLogLimitInKiloBytes;
+            this.PollInterval = DefaultPollInterval;
         }
 
         [JsonProperty(PropertyName = "license_key")]

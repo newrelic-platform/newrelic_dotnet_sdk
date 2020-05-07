@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewRelic.Platform.Sdk.UnitT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewRelic.Platform.Sdk.FunctionalTests", "NewRelic.Platform.Sdk.FunctionalTests\NewRelic.Platform.Sdk.FunctionalTests.csproj", "{E2720282-8274-42FC-9488-717E55FA27D3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{73CBECBF-7D7F-48F7-80EC-EC0A2DBD6DAA}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = NewRelic.Platform.Sdk.vsmdi
